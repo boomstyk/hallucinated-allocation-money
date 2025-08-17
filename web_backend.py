@@ -25,7 +25,6 @@ def get_completion(prompt):
 @app.route("/", methods=['POST', 'GET'])
 def query_view():
     if request.method == 'POST':
-        print('step1')
         prompt = request.form['prompt']
         response = get_completion(prompt)
         print(response)
