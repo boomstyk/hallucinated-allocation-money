@@ -1,6 +1,8 @@
 import os
 import discord 
 import logging
+import asyncio
+import datetime
 from dotenv import load_dotenv
 from discord.ext import commands
 
@@ -33,8 +35,13 @@ async def on_message(message):
     if message.author == bot.user:
         return
     if message.content.startswith('!Hello'):
-        await message.channel.send('Hello, I am the Hallucination Allocation Machine, but you can call me H.A.M.!')
-
+        async with message.channel.typing():
+            await asyncio.sleep(1) #simulate processing time
+            response = "Hello, I am the Hallucination Allocation Machine, but you can call me H.A.M.!"
+            logger.debug(f"Received message: {message.content} from {message.author} at {datetime.datetime.now()}")
+            logger.debug(f"Sending response: {response} to {message.channel}")
+            await message.channel.send(response)
+        
 if __name__ == "__main__":
     if not DISCORD_TOKEN:
         raise ValueError("DISCORD_TOKEN is not set in the environment variables.") 
