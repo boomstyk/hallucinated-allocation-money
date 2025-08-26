@@ -1,12 +1,12 @@
 import os
-import discord 
 import logging
 import asyncio
 import datetime
 import boto3
-from agent import invoke_agent
+import discord 
 from dotenv import load_dotenv
 from discord.ext import commands
+
 
 logger = logging.getLogger("bot_logger")
 logging.basicConfig(filename='bot.log', encoding='utf-8', level=logging.DEBUG)
@@ -57,13 +57,13 @@ async def on_ready():
     
 @bot.event
 async def on_message(message):
+    logger.debug(f"Received message: {message.content} from {message.author} at {datetime.datetime.now()}")
     if message.author == bot.user:
         return
     if message.content.startswith('!Hello'):
         async with message.channel.typing():
             await asyncio.sleep(1) #simulate processing time
             response = "Hello, I am the Hallucination Allocation Machine, but you can call me H.A.M.!"
-            logger.debug(f"Received message: {message.content} from {message.author} at {datetime.datetime.now()}")
             logger.debug(f"Sending response: {response} to {message.channel}")
             await message.channel.send(response)
     elif message.content.startswith('!HAM '):
@@ -72,6 +72,35 @@ async def on_message(message):
             messages = split_message(response)
             for msg in messages:
                 await message.channel.send(msg)
+                
+def invoke_agent(client, prompt, session_id, agent_id = AGENT_ID, alias_id = ALIAS_ID):
+        response = client.invoke_agent(
+            agentId=agent_id,
+            agentAliasId=alias_id,
+            enableTrace=True,
+            sessionId = session_id,
+            inputText=prompt,
+            streamingConfigurations = { 
+    "applyGuardrailInterval" : 20,
+      "streamFinalResponse" : False
+            }
+        )
+        completion = ""
+        for event in response.get("completion"):
+            #Collect agent output.
+            if 'chunk' in event:
+                chunk = event["chunk"]
+                completion += chunk["bytes"].decode()
+            
+            # Log trace output.
+            if 'trace' in event:
+                trace_event = event.get("trace")
+                trace = trace_event['trace']
+                for key, value in trace.items():
+                    logging.info("%s: %s",key,value)
+
+        logger.info(f"Agent response: {completion}")
+        return completion
         
 if __name__ == "__main__":
     if not DISCORD_TOKEN:
@@ -79,3 +108,4 @@ if __name__ == "__main__":
     
     logger.debug("Starting Discord bot...")
     bot.run(DISCORD_TOKEN)
+    
