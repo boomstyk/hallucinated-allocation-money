@@ -1,3 +1,5 @@
 .env
 *.log
 default-keypair.pem
+__pycache__/agent.cpython-313.pyc
+AWSCLIV2.pkg
